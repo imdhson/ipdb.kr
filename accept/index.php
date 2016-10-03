@@ -94,7 +94,7 @@
 							</section>
 				<!-- Footer -->
 					<footer id="footer">
-						<p class="copyright">&copy; <a href="http://didlast.com/">dhson</a>. Design: <a href="https://html5up.net">HTML5 UP</a>. <a href="http://ipdb.kr/terms">Terms</a>. <a href="#">Go to Top</a>.</p>
+						<p class="copyright">&copy; <a href="http://didlast.com/">dhson</a>. Design: <a href="https://html5up.net">HTML5 UP</a>. <a href="https://github.com/hhammer1234/ipdb.kr">Github</a>. <a href="http://ipdb.kr/terms">Terms</a>. <a href="#">Go to Top</a>.</p>
 					</footer>
 			</div>
 
