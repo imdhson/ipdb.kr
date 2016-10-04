@@ -7,13 +7,17 @@
 <?php
 	$ip=$_SERVER['REMOTE_ADDR'];
 	$date = date("Y-m-d H:i:s");
-	$fp = fopen("/var/www/ip/html/iphistory.txt", "a");
+	$fp = fopen("/directory/iphistory.txt", "a");
 	fwrite($fp, "<tr>"."<td>$date</td>"."<td>$ip</td>"."<tr>");
 	fclose($fp);
-	$fp1 = fopen("/var/www/ip/html/iphistory.txt","rb");
+	$fp1 = fopen("/directiry/iphistory.txt","rb");
 	$contents = fread($fp1, filesize("/var/www/ip/html/iphistory.txt"));
 	fclose($fp1);
-
+	if(filesize("iphistory.txt") > 1024) {
+    $fp2 = fopen("iphistory.txt", "w");
+    fwrite($fp2, "");
+    fclose($fp2);
+  }
 ?>
 
 <html>

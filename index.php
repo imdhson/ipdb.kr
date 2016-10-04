@@ -14,6 +14,11 @@
 	$fp1 = fopen("iphistory.txt","rb");
 	$contents = fread($fp1, filesize("iphistory.txt"));
 	fclose($fp1);
+  if(filesize("iphistory.txt") > 1024) {
+    $fp2 = fopen("iphistory.txt", "w");
+    fwrite($fp2, "");
+    fclose($fp2);
+  }
 }
 else	{
 	echo "<meta http-equiv='refresh' content='0;url=terms' />";
