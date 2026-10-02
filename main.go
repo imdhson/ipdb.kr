@@ -1,0 +1,213 @@
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"html/template"
+	"log"
+	"net/http"
+	"os"
+	"strings"
+	"sync"
+	"time"
+)
+
+const historyFile = "iphistory.txt"
+
+var fileMutex sync.Mutex
+
+type HistoryEntry struct {
+	Date string
+	IP   string
+}
+
+// readHistory reads the IP history from the file
+func readHistory() ([]HistoryEntry, error) {
+	fileMutex.Lock()
+	defer fileMutex.Unlock()
+
+	var history []HistoryEntry
+
+	file, err := os.Open(historyFile)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return history, nil
+		}
+		return nil, err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		parts := strings.SplitN(line, "|", 2)
+		if len(parts) == 2 {
+			history = append(history, HistoryEntry{
+				Date: parts[0],
+				IP:   parts[1],
+			})
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return history, nil
+}
+
+// appendHistory appends a new entry to the IP history file and truncates if it gets too large
+func appendHistory(ip string) error {
+	fileMutex.Lock()
+	defer fileMutex.Unlock()
+
+	// Check file size
+	info, err := os.Stat(historyFile)
+	if err == nil && info.Size() > 1024 {
+		// Truncate file
+		err = os.WriteFile(historyFile, []byte(""), 0644)
+		if err != nil {
+			return err
+		}
+	}
+
+	file, err := os.OpenFile(historyFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	dateStr := time.Now().Format("2006-01-02 15:04:05")
+	entry := fmt.Sprintf("%s|%s\n", dateStr, ip)
+	_, err = file.WriteString(entry)
+	return err
+}
+
+// clearHistory truncates the IP history file
+func clearHistory() error {
+	fileMutex.Lock()
+	defer fileMutex.Unlock()
+	return os.WriteFile(historyFile, []byte(""), 0644)
+}
+
+var (
+	indexTmpl *template.Template
+	termsTmpl *template.Template
+)
+
+func init() {
+	indexTmpl = template.Must(template.ParseFiles("templates/index.html"))
+	termsTmpl = template.Must(template.ParseFiles("templates/terms.html"))
+}
+
+func getIP(r *http.Request) string {
+	ip := r.Header.Get("X-Forwarded-For")
+	if ip == "" {
+		ip = r.RemoteAddr
+	}
+	return ip
+}
+
+func handleIndex(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/" && r.URL.Path != "/accept" {
+		http.NotFound(w, r)
+		return
+	}
+
+	cookie, err := r.Cookie("terms")
+	if err != nil || cookie.Value != "accept" {
+		http.Redirect(w, r, "/terms", http.StatusFound)
+		return
+	}
+
+	ip := getIP(r)
+	if err := appendHistory(ip); err != nil {
+		log.Printf("Failed to append history: %v", err)
+	}
+
+	history, err := readHistory()
+	if err != nil {
+		log.Printf("Failed to read history: %v", err)
+	}
+
+	data := struct {
+		IP      string
+		History []HistoryEntry
+	}{
+		IP:      ip,
+		History: history,
+	}
+
+	if err := indexTmpl.Execute(w, data); err != nil {
+		log.Printf("Template execution failed: %v", err)
+	}
+}
+
+func handleTerms(w http.ResponseWriter, r *http.Request) {
+	ip := getIP(r)
+	data := struct {
+		IP string
+	}{
+		IP: ip,
+	}
+
+	if err := termsTmpl.Execute(w, data); err != nil {
+		log.Printf("Template execution failed: %v", err)
+	}
+}
+
+func handleSendAccept(w http.ResponseWriter, r *http.Request) {
+	cookie := &http.Cookie{
+		Name:     "terms",
+		Value:    "accept",
+		Path:     "/",
+		MaxAge:   60 * 60 * 24,
+		HttpOnly: false,
+	}
+	http.SetCookie(w, cookie)
+
+	w.Header().Set("Content-Type", "text/html")
+	w.Write([]byte("<meta http-equiv='refresh' content='0;url=/' />\n<h1>Wait...</h1>"))
+}
+
+func handleSendReject(w http.ResponseWriter, r *http.Request) {
+	cookie := &http.Cookie{
+		Name:     "terms",
+		Value:    "reject",
+		Path:     "/",
+		MaxAge:   60 * 60 * 24,
+		HttpOnly: false,
+	}
+	http.SetCookie(w, cookie)
+
+	w.Header().Set("Content-Type", "text/html")
+	w.Write([]byte("<meta http-equiv='refresh' content='0;url=/' />\n<h1>Wait...</h1>"))
+}
+
+func handleSendRemove(w http.ResponseWriter, r *http.Request) {
+	if err := clearHistory(); err != nil {
+		log.Printf("Failed to clear history: %v", err)
+	}
+
+	w.Header().Set("Content-Type", "text/html")
+	w.Write([]byte("<meta http-equiv='refresh' content='0;url=/terms/sendreject' />\n<h1>Wait...</h1>"))
+}
+
+func main() {
+	// Static files
+	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("assets"))))
+	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("images"))))
+
+	// Routes
+	http.HandleFunc("/", handleIndex)
+	http.HandleFunc("/accept", handleIndex) // Handled same as root
+	http.HandleFunc("/terms", handleTerms)
+	http.HandleFunc("/terms/sendaccept", handleSendAccept)
+	http.HandleFunc("/terms/sendreject", handleSendReject)
+	http.HandleFunc("/sendremove", handleSendRemove)
+
+	log.Println("Server started on :8080")
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		log.Fatalf("Server failed: %v", err)
+	}
+}
