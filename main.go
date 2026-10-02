@@ -101,9 +101,33 @@ func init() {
 }
 
 func getIP(r *http.Request) string {
-	ip := r.Header.Get("X-Forwarded-For")
-	if ip == "" {
-		ip = r.RemoteAddr
+	// 1. Cloudflare IP header
+	ip := r.Header.Get("CF-Connecting-IP")
+	if ip != "" {
+		return ip
+	}
+
+	// 2. X-Forwarded-For header
+	ip = r.Header.Get("X-Forwarded-For")
+	if ip != "" {
+		ips := strings.Split(ip, ",")
+		return strings.TrimSpace(ips[0])
+	}
+
+	// 3. Fallback to RemoteAddr
+	ip = r.RemoteAddr
+	// Remove port if present
+	if strings.Contains(ip, ":") {
+		parts := strings.Split(ip, ":")
+		// Handle IPv6 (e.g. [::1]:8080)
+		if strings.HasPrefix(ip, "[") && strings.Contains(ip, "]:") {
+			idx := strings.LastIndex(ip, ":")
+			return strings.Trim(ip[:idx], "[]")
+		}
+		// Handle IPv4
+		if len(parts) == 2 {
+			return parts[0]
+		}
 	}
 	return ip
 }
