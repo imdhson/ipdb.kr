@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -104,32 +105,43 @@ func getIP(r *http.Request) string {
 	// 1. Cloudflare IP header
 	ip := r.Header.Get("CF-Connecting-IP")
 	if ip != "" {
-		return ip
+		if parsedIP := net.ParseIP(ip); parsedIP != nil {
+			return parsedIP.String()
+		}
 	}
 
 	// 2. X-Forwarded-For header
 	ip = r.Header.Get("X-Forwarded-For")
 	if ip != "" {
 		ips := strings.Split(ip, ",")
-		return strings.TrimSpace(ips[0])
+		ip = strings.TrimSpace(ips[0])
+		if parsedIP := net.ParseIP(ip); parsedIP != nil {
+			return parsedIP.String()
+		}
 	}
 
 	// 3. Fallback to RemoteAddr
 	ip = r.RemoteAddr
-	// Remove port if present
-	if strings.Contains(ip, ":") {
-		parts := strings.Split(ip, ":")
-		// Handle IPv6 (e.g. [::1]:8080)
-		if strings.HasPrefix(ip, "[") && strings.Contains(ip, "]:") {
-			idx := strings.LastIndex(ip, ":")
-			return strings.Trim(ip[:idx], "[]")
-		}
-		// Handle IPv4
-		if len(parts) == 2 {
-			return parts[0]
+	if host, _, err := net.SplitHostPort(ip); err == nil {
+		ip = host
+	} else {
+		// Fallback for cases where port might not be present or format is odd
+		if strings.Contains(ip, ":") {
+			parts := strings.Split(ip, ":")
+			if strings.HasPrefix(ip, "[") && strings.Contains(ip, "]:") {
+				idx := strings.LastIndex(ip, ":")
+				ip = strings.Trim(ip[:idx], "[]")
+			} else if len(parts) == 2 {
+				ip = parts[0]
+			}
 		}
 	}
-	return ip
+
+	if parsedIP := net.ParseIP(ip); parsedIP != nil {
+		return parsedIP.String()
+	}
+
+	return "Unknown"
 }
 
 func handleIndex(w http.ResponseWriter, r *http.Request) {
