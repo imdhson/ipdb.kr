@@ -1,0 +1,3 @@
+## 2024-10-03 - Added Delete Confirmation
+**Learning:** Destructive actions in this app (like clearing IP history via `/sendremove` link) initially executed immediately upon click without user confirmation, leading to potential accidental data loss.
+**Action:** Implemented a simple JavaScript `confirm()` dialog on destructive action links to intercept the click and request explicit user confirmation before proceeding, thereby preventing accidental deletions and improving user confidence while using existing styles and behaviors.
