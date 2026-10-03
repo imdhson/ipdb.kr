@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -110,24 +111,18 @@ func getIP(r *http.Request) string {
 	// 2. X-Forwarded-For header
 	ip = r.Header.Get("X-Forwarded-For")
 	if ip != "" {
-		ips := strings.Split(ip, ",")
-		return strings.TrimSpace(ips[0])
+		// Use strings.Cut instead of strings.Split to avoid slice allocation
+		if firstIP, _, found := strings.Cut(ip, ","); found {
+			return strings.TrimSpace(firstIP)
+		}
+		return strings.TrimSpace(ip)
 	}
 
 	// 3. Fallback to RemoteAddr
 	ip = r.RemoteAddr
-	// Remove port if present
-	if strings.Contains(ip, ":") {
-		parts := strings.Split(ip, ":")
-		// Handle IPv6 (e.g. [::1]:8080)
-		if strings.HasPrefix(ip, "[") && strings.Contains(ip, "]:") {
-			idx := strings.LastIndex(ip, ":")
-			return strings.Trim(ip[:idx], "[]")
-		}
-		// Handle IPv4
-		if len(parts) == 2 {
-			return parts[0]
-		}
+	// Remove port if present using net.SplitHostPort which handles both IPv4 and IPv6
+	if host, _, err := net.SplitHostPort(ip); err == nil {
+		return host
 	}
 	return ip
 }
