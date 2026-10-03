@@ -105,26 +105,43 @@ func getIP(r *http.Request) string {
 	// 1. Cloudflare IP header
 	ip := r.Header.Get("CF-Connecting-IP")
 	if ip != "" {
-		return ip
+		if parsedIP := net.ParseIP(ip); parsedIP != nil {
+			return parsedIP.String()
+		}
 	}
 
 	// 2. X-Forwarded-For header
 	ip = r.Header.Get("X-Forwarded-For")
 	if ip != "" {
-		// Use strings.Cut instead of strings.Split to avoid slice allocation
-		if firstIP, _, found := strings.Cut(ip, ","); found {
-			return strings.TrimSpace(firstIP)
+		ips := strings.Split(ip, ",")
+		ip = strings.TrimSpace(ips[0])
+		if parsedIP := net.ParseIP(ip); parsedIP != nil {
+			return parsedIP.String()
 		}
-		return strings.TrimSpace(ip)
 	}
 
 	// 3. Fallback to RemoteAddr
 	ip = r.RemoteAddr
-	// Remove port if present using net.SplitHostPort which handles both IPv4 and IPv6
 	if host, _, err := net.SplitHostPort(ip); err == nil {
-		return host
+		ip = host
+	} else {
+		// Fallback for cases where port might not be present or format is odd
+		if strings.Contains(ip, ":") {
+			parts := strings.Split(ip, ":")
+			if strings.HasPrefix(ip, "[") && strings.Contains(ip, "]:") {
+				idx := strings.LastIndex(ip, ":")
+				ip = strings.Trim(ip[:idx], "[]")
+			} else if len(parts) == 2 {
+				ip = parts[0]
+			}
+		}
 	}
-	return ip
+
+	if parsedIP := net.ParseIP(ip); parsedIP != nil {
+		return parsedIP.String()
+	}
+
+	return "Unknown"
 }
 
 func handleIndex(w http.ResponseWriter, r *http.Request) {

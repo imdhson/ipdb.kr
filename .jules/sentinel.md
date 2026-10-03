@@ -1,0 +1,4 @@
+## 2024-05-23 - Prevent Log Injection and XSS via Spoofed IP Headers
+**Vulnerability:** The application was reading user IP addresses from `CF-Connecting-IP` and `X-Forwarded-For` headers and storing/displaying them without any validation. Since HTTP headers can be easily spoofed, a malicious user could inject arbitrary text, scripts, or newline characters.
+**Learning:** This could lead to Log Injection (corrupting `iphistory.txt`) and potentially Cross-Site Scripting (XSS) if the template escaping wasn't perfectly secure or used elsewhere without escaping. The application was trusting header input completely.
+**Prevention:** Always validate parsed network data using established standard library functions like `net.ParseIP` to ensure it only contains structurally valid IP addresses before storing or using the data.
