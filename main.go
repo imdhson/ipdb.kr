@@ -41,11 +41,10 @@ func readHistory() ([]HistoryEntry, error) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		parts := strings.SplitN(line, "|", 2)
-		if len(parts) == 2 {
+		if date, ip, found := strings.Cut(line, "|"); found {
 			history = append(history, HistoryEntry{
-				Date: parts[0],
-				IP:   parts[1],
+				Date: date,
+				IP:   ip,
 			})
 		}
 	}
@@ -111,10 +110,14 @@ func getIP(r *http.Request) string {
 	}
 
 	// 2. X-Forwarded-For header
+	// Optimized: Avoid strings.Split allocation when parsing X-Forwarded-For
 	ip = r.Header.Get("X-Forwarded-For")
 	if ip != "" {
-		ips := strings.Split(ip, ",")
-		ip = strings.TrimSpace(ips[0])
+		if idx := strings.IndexByte(ip, ','); idx != -1 {
+			ip = strings.TrimSpace(ip[:idx])
+		} else {
+			ip = strings.TrimSpace(ip)
+		}
 		if parsedIP := net.ParseIP(ip); parsedIP != nil {
 			return parsedIP.String()
 		}
