@@ -84,11 +84,42 @@ func appendHistory(ip string) error {
 	return err
 }
 
-// clearHistory truncates the IP history file
-func clearHistory() error {
+// clearUserHistory removes entries matching the given IP from the history file
+// SECURITY: Prevents a user from deleting other users' history
+func clearUserHistory(userIP string) error {
 	fileMutex.Lock()
 	defer fileMutex.Unlock()
-	return os.WriteFile(historyFile, []byte(""), 0644)
+
+	file, err := os.Open(historyFile)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+
+	var lines []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		parts := strings.SplitN(line, "|", 2)
+		// Only drop the line if it's a valid entry and the IP matches the user's IP.
+		if len(parts) != 2 || parts[1] != userIP {
+			lines = append(lines, line)
+		}
+	}
+	file.Close()
+
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+
+	// Re-write the file with the remaining lines
+	content := ""
+	if len(lines) > 0 {
+		content = strings.Join(lines, "\n") + "\n"
+	}
+	return os.WriteFile(historyFile, []byte(content), 0644)
 }
 
 var (
@@ -221,7 +252,8 @@ func handleSendReject(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleSendRemove(w http.ResponseWriter, r *http.Request) {
-	if err := clearHistory(); err != nil {
+	ip := getIP(r)
+	if err := clearUserHistory(ip); err != nil {
 		log.Printf("Failed to clear history: %v", err)
 	}
 
