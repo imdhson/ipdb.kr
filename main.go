@@ -232,7 +232,8 @@ func handleSendAccept(w http.ResponseWriter, r *http.Request) {
 		Value:    "accept",
 		Path:     "/",
 		MaxAge:   60 * 60 * 24,
-		HttpOnly: false,
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
 	}
 	http.SetCookie(w, cookie)
 
@@ -246,7 +247,8 @@ func handleSendReject(w http.ResponseWriter, r *http.Request) {
 		Value:    "reject",
 		Path:     "/",
 		MaxAge:   60 * 60 * 24,
-		HttpOnly: false,
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
 	}
 	http.SetCookie(w, cookie)
 

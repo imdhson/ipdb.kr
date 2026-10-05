@@ -6,3 +6,7 @@
 **Vulnerability:** The '/sendremove' endpoint called 'clearHistory()' which truncated the entire 'iphistory.txt' file, allowing any user to delete the IP history of all users without authorization.
 **Learning:** Insecure Direct Object Reference (IDOR) can occur when an action applies globally instead of filtering by the user's identity/scope.
 **Prevention:** Ensure that state-modifying actions (like deletions) validate the requester's context (e.g. matching their IP to the entries being deleted) to limit the impact of the action to only data owned by the requester.
+## 2025-02-18 - [Secure Terms Cookie Implementation]
+**Vulnerability:** Terms acceptance cookies were set with `HttpOnly: false` and missing `SameSite` configurations, making them vulnerable to XSS and CSRF attacks.
+**Learning:** Found two places (`handleSendAccept`, `handleSendReject`) managing a simple string state ("accept"/"reject") via cookies to handle ToS acceptance.
+**Prevention:** Make sure cookies default to `HttpOnly: true` and `SameSite: http.SameSiteStrictMode` especially for simple state cookies not required directly by Javascript logic.
