@@ -42,7 +42,7 @@
 					</header>
 
 				<!-- Nav -->
-					<nav id="nav">
+					<nav id="nav" aria-label="Main navigation">
 						<ul>
 							<li><a href="#dash" class="active">Dashboard</a></li>
 							<li><a href="/terms" class="active">Terms</a></li>
@@ -63,8 +63,8 @@
 										<table>
 											<thead>
 												<tr>
-													<th>Date</th>
-													<th>IP</th>
+													<th scope="col">Date</th>
+													<th scope="col">IP</th>
 												</tr>
 											</thead>
 											<tbody>
@@ -77,7 +77,7 @@
 											</tbody>
 										 </table>
 										 <ul class="actions">
-											<li><a href="/sendremove" class="button" aria-label="Remove IP history" onclick="return confirm('Are you sure you want to remove your IP history?');">Remove</a></li>
+											<li><a href="/sendremove" class="button" role="button" aria-label="Remove IP history" onclick="return confirm('Are you sure you want to remove your IP history?');">Remove</a></li>
 										</ul>
 									</div>
 								</div>
