@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"html/template"
 	"log"
 	"net"
@@ -78,7 +77,8 @@ func appendHistory(ip string) error {
 	defer file.Close()
 
 	dateStr := time.Now().Format("2006-01-02 15:04:05")
-	entry := fmt.Sprintf("%s|%s\n", dateStr, ip)
+	// Optimized: Replace fmt.Sprintf with faster string concatenation
+	entry := dateStr + "|" + ip + "\n"
 	_, err = file.WriteString(entry)
 	return err
 }
@@ -101,9 +101,10 @@ func clearUserHistory(userIP string) error {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		parts := strings.SplitN(line, "|", 2)
+		// Optimized: Avoid slice allocation in string parsing
+		_, ipPart, found := strings.Cut(line, "|")
 		// Only drop the line if it's a valid entry and the IP matches the user's IP.
-		if len(parts) != 2 || parts[1] != userIP {
+		if !found || ipPart != userIP {
 			lines = append(lines, line)
 		}
 	}
