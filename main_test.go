@@ -7,9 +7,9 @@ import (
 
 func TestGetIP(t *testing.T) {
 	tests := []struct {
-		name       string
-		req        *http.Request
-		expected   string
+		name     string
+		req      *http.Request
+		expected string
 	}{
 		{
 			name: "CF-Connecting-IP",
