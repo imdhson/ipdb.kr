@@ -9,3 +9,7 @@
 ## 2024-10-05 - Avoid fmt.Sprintf for simple string concatenation
 **Learning:** Using `fmt.Sprintf` for simple string building incurs significant runtime reflection and parsing overhead compared to direct string concatenation. Benchmarks showed concatenation is >3x faster (~70ns vs ~230ns) for simple string joining like `dateStr + "|" + ip + "\n"`.
 **Action:** Prefer direct string concatenation using `+` over `fmt.Sprintf` when joining a few strings together, especially in hot paths like logging, formatting, or file writing logic.
+
+## 2024-05-24 - Optimize File Reading for Tiny Log Files
+**Learning:** `bufio.Scanner` is an anti-pattern for reading very small, artificially constrained files (like `iphistory.txt` which is capped at 1024 bytes). The 4KB buffer allocation in `bufio` is overkill and dominates the performance.
+**Action:** When working with explicit small file caps (< 4KB), prefer reading the entire file into memory with `os.ReadFile` and parsing with `strings.Cut` over allocating readers/scanners. This reduces allocations dramatically (from ~30 down to ~6) and improves execution time. Remember to handle `\r` carriage returns.
