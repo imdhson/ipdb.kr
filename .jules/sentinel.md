@@ -10,3 +10,7 @@
 **Vulnerability:** Terms acceptance cookies were set with `HttpOnly: false` and missing `SameSite` configurations, making them vulnerable to XSS and CSRF attacks.
 **Learning:** Found two places (`handleSendAccept`, `handleSendReject`) managing a simple string state ("accept"/"reject") via cookies to handle ToS acceptance.
 **Prevention:** Make sure cookies default to `HttpOnly: true` and `SameSite: http.SameSiteStrictMode` especially for simple state cookies not required directly by Javascript logic.
+## 2024-05-18 - Missing timeouts in Go HTTP servers
+**Vulnerability:** Default Go HTTP server configurations do not enforce timeouts (`ReadHeaderTimeout`, `ReadTimeout`, `WriteTimeout`, `IdleTimeout`), making the application vulnerable to slow-connection DoS attacks (e.g., Slowloris). Additionally, basic security headers were missing.
+**Learning:** `http.ListenAndServe()` in Go uses `http.Server{}` without any connection timeouts by default.
+**Prevention:** Always initialize `http.Server{}` explicitly with appropriate timeouts and use a middleware to add fundamental security headers like `X-Content-Type-Options`, `X-Frame-Options`, `X-XSS-Protection`, and `Strict-Transport-Security`.
