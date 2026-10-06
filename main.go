@@ -267,6 +267,17 @@ func handleSendRemove(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("<meta http-equiv='refresh' content='0;url=/terms/sendreject' />\n<h1>Wait...</h1>"))
 }
 
+// applySecurityHeaders adds security headers to the response
+func applySecurityHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("X-XSS-Protection", "1; mode=block")
+		w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
 	// Static files
 	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("assets"))))
@@ -280,8 +291,20 @@ func main() {
 	http.HandleFunc("/terms/sendreject", handleSendReject)
 	http.HandleFunc("/sendremove", handleSendRemove)
 
+	// Wrap the default ServeMux with security headers
+	handler := applySecurityHeaders(http.DefaultServeMux)
+
+	server := &http.Server{
+		Addr:              ":8080",
+		Handler:           handler,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      10 * time.Second,
+		IdleTimeout:       120 * time.Second,
+	}
+
 	log.Println("Server started on :8080")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := server.ListenAndServe(); err != nil {
 		log.Fatalf("Server failed: %v", err)
 	}
 }
