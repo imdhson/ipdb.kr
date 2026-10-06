@@ -1997,6 +1997,15 @@
 			background-color: rgba(255, 255, 255, 0.075);
 		}
 
+		input[type="submit"]:focus-visible,
+		input[type="reset"]:focus-visible,
+		input[type="button"]:focus-visible,
+		button:focus-visible,
+		.button:focus-visible {
+			outline: 2px solid #8cc9f0;
+			outline-offset: 2px;
+		}
+
 		input[type="submit"]:active,
 		input[type="reset"]:active,
 		input[type="button"]:active,
@@ -3409,6 +3418,15 @@
 			#main button:hover,
 			#main .button:hover {
 				background-color: rgba(222, 222, 222, 0.25);
+			}
+
+			#main input[type="submit"]:focus-visible,
+			#main input[type="reset"]:focus-visible,
+			#main input[type="button"]:focus-visible,
+			#main button:focus-visible,
+			#main .button:focus-visible {
+				outline: 2px solid #8cc9f0;
+				outline-offset: 2px;
 			}
 
 			#main input[type="submit"]:active,

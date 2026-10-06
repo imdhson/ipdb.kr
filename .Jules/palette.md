@@ -6,3 +6,6 @@
 ## 2024-10-05 - Adding accessibility to custom buttons and table structures
 **Learning:** Found custom button structures using `<a>` tags with `.button` class. They lacked `role="button"` which is critical for screen readers to interpret them correctly as interactive buttons, especially for primary actions like "Accept", "Reject", and "Remove". Also discovered table structures without `scope` definitions on headers, reducing their clarity for assistive technologies.
 **Action:** Always add `role="button"` to non-button elements behaving as buttons and use `scope="col"`/`scope="row"` in simple tables to bind headers to data cells clearly. Used existing `.special` class to elevate primary CTA.
+## 2024-10-06 - Add :focus-visible styles to buttons
+**Learning:** The `.button` class and standard `button`/`input` elements in `assets/css/main.css` did not have visible focus styles for keyboard users, making keyboard navigation difficult to track.
+**Action:** Always verify that interactive elements like buttons and anchors styled as buttons have clear `:focus-visible` styles matching the theme's highlight color to improve keyboard accessibility.
