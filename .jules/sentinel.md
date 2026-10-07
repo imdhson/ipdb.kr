@@ -14,3 +14,7 @@
 **Vulnerability:** Default Go HTTP server configurations do not enforce timeouts (`ReadHeaderTimeout`, `ReadTimeout`, `WriteTimeout`, `IdleTimeout`), making the application vulnerable to slow-connection DoS attacks (e.g., Slowloris). Additionally, basic security headers were missing.
 **Learning:** `http.ListenAndServe()` in Go uses `http.Server{}` without any connection timeouts by default.
 **Prevention:** Always initialize `http.Server{}` explicitly with appropriate timeouts and use a middleware to add fundamental security headers like `X-Content-Type-Options`, `X-Frame-Options`, `X-XSS-Protection`, and `Strict-Transport-Security`.
+## 2023-10-25 - Prevent CSRF on State-Changing Endpoints via GET Requests
+**Vulnerability:** The `/sendremove` endpoint, which clears a user's IP history, was accessible via an HTTP GET request. This allowed Cross-Site Request Forgery (CSRF) attacks, where an attacker could trick a user into navigating to the endpoint (e.g., via a hidden image tag or malicious link) to delete their IP history without their consent.
+**Learning:** Performing state-changing operations via GET requests violates HTTP semantics and bypasses basic protections that browsers and web frameworks apply to POST requests. In unauthenticated (or IP-based) systems, this makes such endpoints easily exploitable.
+**Prevention:** Always require `http.MethodPost` (or PUT/DELETE) for endpoints that modify or delete data, and use an HTML `<form>` or XHR/fetch to submit to it.
