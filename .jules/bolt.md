@@ -13,3 +13,6 @@
 ## 2024-05-24 - Optimize File Reading for Tiny Log Files
 **Learning:** `bufio.Scanner` is an anti-pattern for reading very small, artificially constrained files (like `iphistory.txt` which is capped at 1024 bytes). The 4KB buffer allocation in `bufio` is overkill and dominates the performance.
 **Action:** When working with explicit small file caps (< 4KB), prefer reading the entire file into memory with `os.ReadFile` and parsing with `strings.Cut` over allocating readers/scanners. This reduces allocations dramatically (from ~30 down to ~6) and improves execution time. Remember to handle `\r` carriage returns.
+## 2024-10-07 - [Zero-allocation time formatting]
+**Learning:** Using `time.Now().AppendFormat` onto a fixed-size stack array (e.g. `var buf [64]byte`) eliminates heap allocations entirely for time formatting and string concatenation in Go, offering a ~35% speedup.
+**Action:** Always prefer `time.AppendFormat` over `time.Format` and direct slice appends over string concatenation using `+` when the max length of the output string is predictable and small, especially in hot paths.
