@@ -9,3 +9,6 @@
 ## 2024-10-06 - Add :focus-visible styles to buttons
 **Learning:** The `.button` class and standard `button`/`input` elements in `assets/css/main.css` did not have visible focus styles for keyboard users, making keyboard navigation difficult to track.
 **Action:** Always verify that interactive elements like buttons and anchors styled as buttons have clear `:focus-visible` styles matching the theme's highlight color to improve keyboard accessibility.
+## 2024-10-07 - Add Smooth Scrolling to Anchor Links
+**Learning:** Anchor links intended for page navigation like "Go to Bottom" or "Go to Top" caused harsh, instantaneous jumps that disoriented users. The HTML5 UP theme includes a `scrolly` jQuery plugin specifically designed to animate these transitions, but it wasn't applied to all relevant links. Also, the "Go to Top" links were using a blank `#` href instead of targeting a specific element ID like `#header`.
+**Action:** Consistently apply the `.scrolly` class to internal page navigation links and ensure their `href` attributes target specific element IDs to utilize existing smooth scrolling capabilities, resulting in a more polished and fluid micro-interaction without adding new dependencies.
