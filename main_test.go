@@ -12,8 +12,9 @@ func TestGetIP(t *testing.T) {
 		expected string
 	}{
 		{
-			name: "CF-Connecting-IP",
+			name: "CF-Connecting-IP Trusted Proxy",
 			req: &http.Request{
+				RemoteAddr: "127.0.0.1:1234",
 				Header: http.Header{
 					"Cf-Connecting-Ip": []string{"1.2.3.4"},
 				},
@@ -21,8 +22,19 @@ func TestGetIP(t *testing.T) {
 			expected: "1.2.3.4",
 		},
 		{
-			name: "X-Forwarded-For Multiple",
+			name: "CF-Connecting-IP Untrusted Proxy (Spoofing)",
 			req: &http.Request{
+				RemoteAddr: "9.9.9.9:1234",
+				Header: http.Header{
+					"Cf-Connecting-Ip": []string{"1.2.3.4"},
+				},
+			},
+			expected: "9.9.9.9",
+		},
+		{
+			name: "X-Forwarded-For Multiple Trusted Proxy",
+			req: &http.Request{
+				RemoteAddr: "10.0.0.1:1234",
 				Header: http.Header{
 					"X-Forwarded-For": []string{"1.2.3.4, 5.6.7.8"},
 				},
@@ -30,8 +42,9 @@ func TestGetIP(t *testing.T) {
 			expected: "1.2.3.4",
 		},
 		{
-			name: "X-Forwarded-For Single",
+			name: "X-Forwarded-For Single Trusted Proxy",
 			req: &http.Request{
+				RemoteAddr: "192.168.1.1:1234",
 				Header: http.Header{
 					"X-Forwarded-For": []string{"1.2.3.4"},
 				},
@@ -39,11 +52,21 @@ func TestGetIP(t *testing.T) {
 			expected: "1.2.3.4",
 		},
 		{
+			name: "X-Forwarded-For Untrusted Proxy (Spoofing)",
+			req: &http.Request{
+				RemoteAddr: "8.8.8.8:1234",
+				Header: http.Header{
+					"X-Forwarded-For": []string{"1.2.3.4"},
+				},
+			},
+			expected: "8.8.8.8",
+		},
+		{
 			name: "RemoteAddr IPv4 with Port",
 			req: &http.Request{
-				RemoteAddr: "192.168.1.1:8080",
+				RemoteAddr: "192.168.1.5:8080",
 			},
-			expected: "192.168.1.1",
+			expected: "192.168.1.5",
 		},
 		{
 			name: "RemoteAddr IPv6 with Port",

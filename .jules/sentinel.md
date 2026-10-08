@@ -18,3 +18,8 @@
 **Vulnerability:** The `/sendremove` endpoint, which clears a user's IP history, was accessible via an HTTP GET request. This allowed Cross-Site Request Forgery (CSRF) attacks, where an attacker could trick a user into navigating to the endpoint (e.g., via a hidden image tag or malicious link) to delete their IP history without their consent.
 **Learning:** Performing state-changing operations via GET requests violates HTTP semantics and bypasses basic protections that browsers and web frameworks apply to POST requests. In unauthenticated (or IP-based) systems, this makes such endpoints easily exploitable.
 **Prevention:** Always require `http.MethodPost` (or PUT/DELETE) for endpoints that modify or delete data, and use an HTML `<form>` or XHR/fetch to submit to it.
+
+## 2024-10-08 - IP Spoofing via Proxy Headers
+**Vulnerability:** The application unconditionally trusted `CF-Connecting-IP` and `X-Forwarded-For` headers to determine the client's IP address. This allows any external client to easily spoof their IP address by injecting these headers into their requests.
+**Learning:** Blindly trusting proxy headers without validating the source of the connection (e.g., checking if it's from a trusted load balancer or local proxy) is a critical security vulnerability.
+**Prevention:** Always parse `r.RemoteAddr` first to verify the direct connection source. Only read proxy headers if `r.RemoteAddr` corresponds to a trusted proxy IP (e.g., local, loopback, or internal private IPs).
