@@ -139,30 +139,8 @@ func init() {
 }
 
 func getIP(r *http.Request) string {
-	// 1. Cloudflare IP header
-	ip := r.Header.Get("CF-Connecting-IP")
-	if ip != "" {
-		if parsedIP := net.ParseIP(ip); parsedIP != nil {
-			return parsedIP.String()
-		}
-	}
-
-	// 2. X-Forwarded-For header
-	// Optimized: Avoid strings.Split allocation when parsing X-Forwarded-For
-	ip = r.Header.Get("X-Forwarded-For")
-	if ip != "" {
-		if idx := strings.IndexByte(ip, ','); idx != -1 {
-			ip = strings.TrimSpace(ip[:idx])
-		} else {
-			ip = strings.TrimSpace(ip)
-		}
-		if parsedIP := net.ParseIP(ip); parsedIP != nil {
-			return parsedIP.String()
-		}
-	}
-
-	// 3. Fallback to RemoteAddr
-	ip = r.RemoteAddr
+	// 1. Get the direct RemoteAddr first
+	ip := r.RemoteAddr
 	if host, _, err := net.SplitHostPort(ip); err == nil {
 		ip = host
 	} else {
@@ -178,8 +156,36 @@ func getIP(r *http.Request) string {
 		}
 	}
 
-	if parsedIP := net.ParseIP(ip); parsedIP != nil {
-		return parsedIP.String()
+	parsedDirectIP := net.ParseIP(ip)
+
+	// SECURITY: Only trust proxy headers if request comes from a trusted proxy (local/private IP)
+	// This prevents IP spoofing attacks where external users forge these headers.
+	isTrustedProxy := parsedDirectIP != nil && (parsedDirectIP.IsLoopback() || parsedDirectIP.IsPrivate() || parsedDirectIP.IsUnspecified())
+
+	if isTrustedProxy {
+		// 2. Cloudflare IP header
+		if proxyIP := r.Header.Get("CF-Connecting-IP"); proxyIP != "" {
+			if parsedIP := net.ParseIP(proxyIP); parsedIP != nil {
+				return parsedIP.String()
+			}
+		}
+
+		// 3. X-Forwarded-For header
+		proxyIP := r.Header.Get("X-Forwarded-For")
+		if proxyIP != "" {
+			if idx := strings.IndexByte(proxyIP, ','); idx != -1 {
+				proxyIP = strings.TrimSpace(proxyIP[:idx])
+			} else {
+				proxyIP = strings.TrimSpace(proxyIP)
+			}
+			if parsedIP := net.ParseIP(proxyIP); parsedIP != nil {
+				return parsedIP.String()
+			}
+		}
+	}
+
+	if parsedDirectIP != nil {
+		return parsedDirectIP.String()
 	}
 
 	return "Unknown"
