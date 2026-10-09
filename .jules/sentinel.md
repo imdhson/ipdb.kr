@@ -23,3 +23,8 @@
 **Vulnerability:** The application unconditionally trusted `CF-Connecting-IP` and `X-Forwarded-For` headers to determine the client's IP address. This allows any external client to easily spoof their IP address by injecting these headers into their requests.
 **Learning:** Blindly trusting proxy headers without validating the source of the connection (e.g., checking if it's from a trusted load balancer or local proxy) is a critical security vulnerability.
 **Prevention:** Always parse `r.RemoteAddr` first to verify the direct connection source. Only read proxy headers if `r.RemoteAddr` corresponds to a trusted proxy IP (e.g., local, loopback, or internal private IPs).
+
+## 2024-10-24 - Prevent CSRF on Terms Acceptance via GET Requests
+**Vulnerability:** The `/terms/sendaccept` and `/terms/sendreject` endpoints, which set terms acceptance cookies, were accessible via HTTP GET requests. This allowed Cross-Site Request Forgery (CSRF) attacks where an attacker could trick a user into accepting or rejecting terms without their consent.
+**Learning:** State-changing operations via GET requests are inherently vulnerable to CSRF. While a previous entry documented this for `/sendremove`, other routes were missed, highlighting the need to audit *all* endpoints that modify state (including cookies).
+**Prevention:** Ensure that all endpoints modifying application state or setting critical cookies enforce HTTP POST (or other appropriate state-modifying methods) and are integrated with proper frontend HTML forms or XHR submissions.
