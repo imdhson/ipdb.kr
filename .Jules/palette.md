@@ -15,3 +15,6 @@
 ## 2024-10-08 - Multilingual Screen Reader Accessibility
 **Learning:** This application contains mixed language content (English and Korean) on the same page. Without explicit language declarations, screen readers will attempt to read the Korean text using the document's default English voice profile, leading to severe mispronunciations or silence.
 **Action:** Always wrap non-primary language text blocks in elements (like `<p>` or `<span>`) with the appropriate `lang` attribute (e.g., `lang="ko"`) so screen readers can automatically switch to the correct language synthesis engine and provide an accessible experience for all users.
+## 2024-10-09 - Descriptive Page Titles and Link Text Context
+**Learning:** Found `<title>` tags relying solely on dynamic content (like just an IP address) without indicating the application name, leaving users with multiple tabs confused about which site they are on. Similarly, found vague "Click here" link text which degrades experience for screen readers scanning links out of context.
+**Action:** Always append application context to `<title>` elements (e.g. `{{.IP}} - IP Dashboard`) and replace vague link text like "Click here" with descriptive action text (e.g. "Proceed to Dashboard") to improve tab management and screen reader accessibility.
