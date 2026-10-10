@@ -178,10 +178,12 @@ func getIP(r *http.Request) string {
 		}
 
 		// 3. X-Forwarded-For header
+		// Assuming a fixed trusted proxy depth of 1, the client's real IP
+		// is the right-most IP appended by our immediate trusted proxy.
 		proxyIP := r.Header.Get("X-Forwarded-For")
 		if proxyIP != "" {
-			if idx := strings.IndexByte(proxyIP, ','); idx != -1 {
-				proxyIP = strings.TrimSpace(proxyIP[:idx])
+			if idx := strings.LastIndexByte(proxyIP, ','); idx != -1 {
+				proxyIP = strings.TrimSpace(proxyIP[idx+1:])
 			} else {
 				proxyIP = strings.TrimSpace(proxyIP)
 			}

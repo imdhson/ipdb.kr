@@ -39,7 +39,17 @@ func TestGetIP(t *testing.T) {
 					"X-Forwarded-For": []string{"1.2.3.4, 5.6.7.8"},
 				},
 			},
-			expected: "1.2.3.4",
+			expected: "5.6.7.8",
+		},
+		{
+			name: "X-Forwarded-For Spoofing via Trusted Proxy",
+			req: &http.Request{
+				RemoteAddr: "192.168.1.1:1234",
+				Header: http.Header{
+					"X-Forwarded-For": []string{"1.2.3.4, 5.6.7.8, 10.0.0.5"},
+				},
+			},
+			expected: "10.0.0.5",
 		},
 		{
 			name: "X-Forwarded-For Single Trusted Proxy",

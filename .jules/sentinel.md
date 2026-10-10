@@ -28,3 +28,8 @@
 **Vulnerability:** The `/terms/sendaccept` and `/terms/sendreject` endpoints, which set terms acceptance cookies, were accessible via HTTP GET requests. This allowed Cross-Site Request Forgery (CSRF) attacks where an attacker could trick a user into accepting or rejecting terms without their consent.
 **Learning:** State-changing operations via GET requests are inherently vulnerable to CSRF. While a previous entry documented this for `/sendremove`, other routes were missed, highlighting the need to audit *all* endpoints that modify state (including cookies).
 **Prevention:** Ensure that all endpoints modifying application state or setting critical cookies enforce HTTP POST (or other appropriate state-modifying methods) and are integrated with proper frontend HTML forms or XHR submissions.
+
+## 2024-10-25 - IP Spoofing via left-most X-Forwarded-For parsing
+**Vulnerability:** Even when behind a trusted proxy, parsing the `X-Forwarded-For` header by taking the left-most IP address blindly trusts user input. If a user sets a spoofed XFF header, the trusted proxy will append the real IP, but the application would still read the spoofed left-most IP.
+**Learning:** The left-most entries in `X-Forwarded-For` are controlled by the client and cannot be trusted. Only the right-most entries appended by trusted proxies are reliable.
+**Prevention:** When parsing `X-Forwarded-For`, always iterate from right-to-left, checking each IP. Stop and use the first IP that is NOT part of your trusted proxy infrastructure (e.g., not an internal/private IP).
