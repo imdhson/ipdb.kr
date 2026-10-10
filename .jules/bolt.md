@@ -24,3 +24,7 @@
 ## 2023-10-09 - Pre-allocate slice capacity for text file lines
 **Learning:** Pre-allocating slice capacity by using `strings.Count(s, "\n")` before parsing lines of text can significantly reduce heap allocations (from ~8 to ~2) and improve speed (by ~35%), even for small files loaded entirely into memory.
 **Action:** Always count lines or items upfront to determine required slice capacity before looping and appending, particularly when parsing delimited strings or files.
+
+## 2023-10-25 - [In-place byte slice filtering panic]
+**Learning:** When performing in-place byte slice filtering/modification (e.g., dropping lines from a file loaded into a `[]byte`), directly indexing the slice via `data[outLen] = '\n'` is dangerous. If the final length equals the original capacity (e.g., when retaining a final line that lacked a trailing newline in the source), this manual assignment will cause an index out of bounds panic.
+**Action:** Always use `append` for in-place slice modifications (e.g., `data = append(data[:outLen], line...)` followed by `data = append(data, '\n')`). `append` safely handles length boundaries and will automatically expand capacity if ever necessary, preventing out-of-bounds panics while remaining allocation-free if capacity permits.

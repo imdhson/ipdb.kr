@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"html/template"
 	"log"
 	"net"
@@ -102,8 +103,8 @@ func clearUserHistory(userIP string) error {
 	fileMutex.Lock()
 	defer fileMutex.Unlock()
 
-	// ⚡ Bolt: Use os.ReadFile instead of bufio.Scanner and string slices
-	// Reduces allocations by ~80% and improves speed by ~10x since file size is capped at 1024 bytes.
+	// ⚡ Bolt: Use os.ReadFile and process byte slice in-place
+	// Reduces allocations to 1 by eliminating string building and reduces execution time.
 	data, err := os.ReadFile(historyFile)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -112,27 +113,37 @@ func clearUserHistory(userIP string) error {
 		return err
 	}
 
-	var buf strings.Builder
-	buf.Grow(len(data)) // Max size would be original data length
-	s := string(data)
+	rem := data
+	outLen := 0
+	sep := []byte("\n")
+	cr := []byte("\r")
+	pipe := []byte("|")
 
-	for len(s) > 0 {
-		var line string
-		line, s, _ = strings.Cut(s, "\n")
+	for len(rem) > 0 {
+		var line []byte
+		var foundNl bool
+		line, rem, foundNl = bytes.Cut(rem, sep)
 
 		// To preserve existing behavior identically, only drop if found and matches.
 		// Even empty lines should be kept if that was the old behavior.
-		lineTrimmed := strings.TrimSuffix(line, "\r")
-		_, ipPart, found := strings.Cut(lineTrimmed, "|")
+		lineTrimmed := bytes.TrimSuffix(line, cr)
+		_, ipPart, found := bytes.Cut(lineTrimmed, pipe)
 
 		// Only drop the line if it's a valid entry and the IP matches the user's IP.
-		if !found || ipPart != userIP {
-			buf.WriteString(line)
-			buf.WriteByte('\n')
+		if !found || string(ipPart) != userIP {
+			// use append to safely manage length and capacity
+			outData := append(data[:outLen], line...)
+			outData = append(outData, '\n')
+			// Because we are modifying the backing array in place, we update data and outLen
+			data = outData
+			outLen = len(data)
+		} else if !foundNl {
+			// edge case: last line without newline which matched userIP, we shouldn't add anything.
+			// original behavior dropped the whole line.
 		}
 	}
 
-	return os.WriteFile(historyFile, []byte(buf.String()), 0644)
+	return os.WriteFile(historyFile, data[:outLen], 0644)
 }
 
 var (
