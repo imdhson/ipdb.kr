@@ -18,3 +18,7 @@
 ## 2024-10-09 - Descriptive Page Titles and Link Text Context
 **Learning:** Found `<title>` tags relying solely on dynamic content (like just an IP address) without indicating the application name, leaving users with multiple tabs confused about which site they are on. Similarly, found vague "Click here" link text which degrades experience for screen readers scanning links out of context.
 **Action:** Always append application context to `<title>` elements (e.g. `{{.IP}} - IP Dashboard`) and replace vague link text like "Click here" with descriptive action text (e.g. "Proceed to Dashboard") to improve tab management and screen reader accessibility.
+
+## 2023-10-24 - [Make IP History Table Responsive]
+**Learning:** Hardcoded inline styles on tables break layout responsiveness on small screens. The native HTML5 UP "Stellar" theme design system has a built-in `.table-wrapper` class which implements `overflow-x: auto` specifically for tables.
+**Action:** Always wrap data tables in `.table-wrapper` and avoid hardcoding custom `td`/`th` styles when integrating with existing design systems to ensure mobile usability.
