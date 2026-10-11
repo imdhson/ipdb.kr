@@ -53,11 +53,17 @@
 													</tr>
 												</thead>
 												<tbody>
-													{{range .History}}
-													<tr>
-														<td>{{.Date}}</td>
-														<td>{{.IP}}</td>
-													</tr>
+													{{if .History}}
+														{{range .History}}
+														<tr>
+															<td>{{.Date}}</td>
+															<td>{{.IP}}</td>
+														</tr>
+														{{end}}
+													{{else}}
+														<tr>
+															<td colspan="2" class="align-center">No IP history found.</td>
+														</tr>
 													{{end}}
 												</tbody>
 											 </table>
@@ -65,7 +71,7 @@
 										 <ul class="actions">
 											<li>
 												<form method="POST" action="/sendremove" style="display:inline;" onsubmit="return confirm('Are you sure you want to remove your IP history?');">
-													<button type="submit" class="button" role="button" aria-label="Remove IP history" style="cursor: pointer;">Remove</button>
+													<button type="submit" class="button{{if not .History}} disabled{{end}}" role="button" aria-label="Remove IP history" style="cursor: pointer;" {{if not .History}}disabled aria-disabled="true" title="No history to remove"{{end}}>Remove</button>
 												</form>
 											</li>
 										</ul>
