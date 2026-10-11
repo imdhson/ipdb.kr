@@ -33,3 +33,7 @@
 **Vulnerability:** Even when behind a trusted proxy, parsing the `X-Forwarded-For` header by taking the left-most IP address blindly trusts user input. If a user sets a spoofed XFF header, the trusted proxy will append the real IP, but the application would still read the spoofed left-most IP.
 **Learning:** The left-most entries in `X-Forwarded-For` are controlled by the client and cannot be trusted. Only the right-most entries appended by trusted proxies are reliable.
 **Prevention:** When parsing `X-Forwarded-For`, always iterate from right-to-left, checking each IP. Stop and use the first IP that is NOT part of your trusted proxy infrastructure (e.g., not an internal/private IP).
+## 2026-10-11 - Add Content Security Policy (CSP)
+**Vulnerability:** The application was missing a Content-Security-Policy header.
+**Learning:** A basic CSP providing defense in depth can be implemented as a security header.
+**Prevention:** Added a permissive CSP via middleware.
