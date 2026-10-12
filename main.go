@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -260,9 +261,33 @@ func handleTerms(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// validateCSRF checks the Origin or Referer header to prevent CSRF attacks
+// SECURITY: Ensures state-changing POST requests come from our own site
+func validateCSRF(r *http.Request) bool {
+	origin := r.Header.Get("Origin")
+	if origin != "" {
+		if u, err := url.Parse(origin); err == nil {
+			return u.Host == r.Host
+		}
+	}
+
+	referer := r.Header.Get("Referer")
+	if referer != "" {
+		if u, err := url.Parse(referer); err == nil {
+			return u.Host == r.Host
+		}
+	}
+
+	return false
+}
+
 func handleSendAccept(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	if !validateCSRF(r) {
+		http.Error(w, "Forbidden - CSRF check failed", http.StatusForbidden)
 		return
 	}
 
@@ -287,6 +312,10 @@ func handleSendReject(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return
 	}
+	if !validateCSRF(r) {
+		http.Error(w, "Forbidden - CSRF check failed", http.StatusForbidden)
+		return
+	}
 
 	cookie := &http.Cookie{
 		Name:     "terms",
@@ -307,6 +336,10 @@ func handleSendReject(w http.ResponseWriter, r *http.Request) {
 func handleSendRemove(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	if !validateCSRF(r) {
+		http.Error(w, "Forbidden - CSRF check failed", http.StatusForbidden)
 		return
 	}
 
