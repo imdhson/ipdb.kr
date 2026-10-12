@@ -32,3 +32,6 @@
 ## 2024-10-10 - Eliminate heap allocations in static HTTP responses
 **Learning:** Using `w.Write([]byte("constant string"))` in an `http.ResponseWriter` forces a heap allocation for the byte slice conversion. Replacing this with `io.WriteString(w, "constant string")` eliminates the allocation entirely (drops from 1 to 0 per call) and reduces execution time significantly (~70% faster in microbenchmarks).
 **Action:** When writing static string content directly to an `http.ResponseWriter`, always prefer `io.WriteString` over `w.Write([]byte(...))` to minimize heap allocations and improve performance.
+## 2026-10-11 - [Use netip for allocation-free IP parsing]
+ **Learning:** Using `net.ParseIP` and `net.SplitHostPort` allocates strings and slices on the heap. Trying to optimize `net.SplitHostPort` manually with `strings.LastIndexByte` is dangerous for IPv6 parsing and harms readability. The `net/netip` package (introduced in Go 1.18) provides `netip.ParseAddrPort` and `netip.ParseAddr` which solve this by parsing addresses without heap allocations while remaining safe and idiomatic.
+ **Action:** Prefer `net/netip` over `net.ParseIP` and manual string manipulation for all new IP parsing code.
