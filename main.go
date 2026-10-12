@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/netip"
 	"os"
 	"strings"
 	"sync"
@@ -160,32 +161,44 @@ func init() {
 func getIP(r *http.Request) string {
 	// 1. Get the direct RemoteAddr first
 	ip := r.RemoteAddr
-	if host, _, err := net.SplitHostPort(ip); err == nil {
-		ip = host
+
+	// ⚡ Bolt: Fast, allocation-free IP parsing using netip
+	// Try parsing directly as AddrPort since RemoteAddr usually includes it
+	var parsedDirectIP netip.Addr
+	if addrPort, err := netip.ParseAddrPort(ip); err == nil {
+		parsedDirectIP = addrPort.Addr()
+	} else if addr, err := netip.ParseAddr(ip); err == nil {
+		// Fallback for IP without port
+		parsedDirectIP = addr
 	} else {
-		// Fallback for cases where port might not be present or format is odd
-		if strings.Contains(ip, ":") {
-			parts := strings.Split(ip, ":")
-			if strings.HasPrefix(ip, "[") && strings.Contains(ip, "]:") {
-				idx := strings.LastIndex(ip, ":")
-				ip = strings.Trim(ip[:idx], "[]")
-			} else if len(parts) == 2 {
-				ip = parts[0]
+		// Legacy fallback for odd formats
+		if host, _, err := net.SplitHostPort(ip); err == nil {
+			ip = host
+		} else {
+			if strings.Contains(ip, ":") {
+				parts := strings.Split(ip, ":")
+				if strings.HasPrefix(ip, "[") && strings.Contains(ip, "]:") {
+					idx := strings.LastIndex(ip, ":")
+					ip = strings.Trim(ip[:idx], "[]")
+				} else if len(parts) == 2 {
+					ip = parts[0]
+				}
 			}
+		}
+		if addr, err := netip.ParseAddr(ip); err == nil {
+			parsedDirectIP = addr
 		}
 	}
 
-	parsedDirectIP := net.ParseIP(ip)
-
 	// SECURITY: Only trust proxy headers if request comes from a trusted proxy (local/private IP)
 	// This prevents IP spoofing attacks where external users forge these headers.
-	isTrustedProxy := parsedDirectIP != nil && (parsedDirectIP.IsLoopback() || parsedDirectIP.IsPrivate() || parsedDirectIP.IsUnspecified())
+	isTrustedProxy := parsedDirectIP.IsValid() && (parsedDirectIP.IsLoopback() || parsedDirectIP.IsPrivate() || parsedDirectIP.IsUnspecified())
 
 	if isTrustedProxy {
 		// 2. Cloudflare IP header
 		if proxyIP := r.Header.Get("CF-Connecting-IP"); proxyIP != "" {
-			if parsedIP := net.ParseIP(proxyIP); parsedIP != nil {
-				return parsedIP.String()
+			if addr, err := netip.ParseAddr(proxyIP); err == nil {
+				return addr.String()
 			}
 		}
 
@@ -199,13 +212,13 @@ func getIP(r *http.Request) string {
 			} else {
 				proxyIP = strings.TrimSpace(proxyIP)
 			}
-			if parsedIP := net.ParseIP(proxyIP); parsedIP != nil {
-				return parsedIP.String()
+			if addr, err := netip.ParseAddr(proxyIP); err == nil {
+				return addr.String()
 			}
 		}
 	}
 
-	if parsedDirectIP != nil {
+	if parsedDirectIP.IsValid() {
 		return parsedDirectIP.String()
 	}
 
