@@ -37,3 +37,8 @@
 **Vulnerability:** The application was missing a Content-Security-Policy header.
 **Learning:** A basic CSP providing defense in depth can be implemented as a security header.
 **Prevention:** Added a permissive CSP via middleware.
+
+## 2026-10-12 - Prevent CSRF on POST Endpoints via Header Validation
+**Vulnerability:** Even though state-changing endpoints were restricted to HTTP POST methods, they lacked proper Cross-Site Request Forgery (CSRF) protection. An attacker could still trick a user's browser into submitting a form POST request to these endpoints.
+**Learning:** Relying solely on POST methods or SameSite cookies (which only protect cookie-based auth) isn't sufficient for comprehensive CSRF protection. Checking Origin/Referer headers provides a lightweight, stateless defense for simple applications.
+**Prevention:** Implement stateless CSRF validation by verifying that the `Origin` or `Referer` HTTP header matches the requested `Host`, ensuring requests originate from the application itself.
