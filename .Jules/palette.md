@@ -25,3 +25,6 @@
 ## 2024-10-10 - Add Empty States for Tables and Disable Empty Actions
 **Learning:** Empty tables without explicit "no data" states leave users wondering if the page is still loading or broken, especially when associated destructive actions (like a "Remove" button) remain active and clickable despite there being nothing to remove.
 **Action:** Always provide explicit empty states within tables (e.g., using `colspan` and a centering class like `.align-center`) and disable corresponding contextual actions (using `disabled`, `.disabled` class, and `aria-disabled="true"`) to guide users and prevent confusing interactions.
+## 2024-10-12 - Add :focus-visible to anchor tags
+**Learning:** Found that while buttons and form inputs had clear `:focus-visible` styles, standard anchor links (`<a>`) lacked them. This causes keyboard users to lose track of their focus position when tabbing through navigation links or text links.
+**Action:** Always ensure that all interactive elements, including anchor links, have explicitly defined `:focus-visible` outlines matching the theme's highlight colors to maintain an accessible and clear keyboard navigation experience.
