@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/netip"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -176,12 +177,13 @@ func getIP(r *http.Request) string {
 			ip = host
 		} else {
 			if strings.Contains(ip, ":") {
-				parts := strings.Split(ip, ":")
 				if strings.HasPrefix(ip, "[") && strings.Contains(ip, "]:") {
 					idx := strings.LastIndex(ip, ":")
 					ip = strings.Trim(ip[:idx], "[]")
-				} else if len(parts) == 2 {
-					ip = parts[0]
+				} else {
+					if host, _, found := strings.Cut(ip, ":"); found {
+						ip = host
+					}
 				}
 			}
 		}

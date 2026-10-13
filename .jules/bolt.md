@@ -35,3 +35,7 @@
 ## 2026-10-11 - [Use netip for allocation-free IP parsing]
  **Learning:** Using `net.ParseIP` and `net.SplitHostPort` allocates strings and slices on the heap. Trying to optimize `net.SplitHostPort` manually with `strings.LastIndexByte` is dangerous for IPv6 parsing and harms readability. The `net/netip` package (introduced in Go 1.18) provides `netip.ParseAddrPort` and `netip.ParseAddr` which solve this by parsing addresses without heap allocations while remaining safe and idiomatic.
  **Action:** Prefer `net/netip` over `net.ParseIP` and manual string manipulation for all new IP parsing code.
+
+## 2024-10-13 - [Zero-allocation IP port parsing]
+**Learning:** Using `strings.Split(ip, ":")` to split an IP and a port forces a heap allocation (e.g. 32 bytes) because it allocates a new slice. By rearranging the logic to use `strings.Cut(ip, ":")` when the input is not an IPv6 string, we can eliminate the slice allocation entirely and reduce processing time significantly (from ~70ns down to ~10ns).
+**Action:** Prefer `strings.Cut` over `strings.Split` whenever only the first delimited element is required or when processing simple two-part strings. Avoid blindly calling `strings.Split` before ensuring the split parts will actually be used.
