@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/netip"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -309,6 +310,7 @@ func handleSendAccept(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		MaxAge:   60 * 60 * 24,
 		HttpOnly: true,
+		Secure:   true,
 		SameSite: http.SameSiteStrictMode,
 	}
 	http.SetCookie(w, cookie)
@@ -335,6 +337,7 @@ func handleSendReject(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		MaxAge:   60 * 60 * 24,
 		HttpOnly: true,
+		Secure:   true,
 		SameSite: http.SameSiteStrictMode,
 	}
 	http.SetCookie(w, cookie)
@@ -374,6 +377,7 @@ func applySecurityHeaders(next http.Handler) http.Handler {
 		w.Header().Set("X-XSS-Protection", "1; mode=block")
 		w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
 		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;")
+		w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate")
 		next.ServeHTTP(w, r)
 	})
 }

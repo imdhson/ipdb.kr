@@ -42,3 +42,7 @@
 **Vulnerability:** Even though state-changing endpoints were restricted to HTTP POST methods, they lacked proper Cross-Site Request Forgery (CSRF) protection. An attacker could still trick a user's browser into submitting a form POST request to these endpoints.
 **Learning:** Relying solely on POST methods or SameSite cookies (which only protect cookie-based auth) isn't sufficient for comprehensive CSRF protection. Checking Origin/Referer headers provides a lightweight, stateless defense for simple applications.
 **Prevention:** Implement stateless CSRF validation by verifying that the `Origin` or `Referer` HTTP header matches the requested `Host`, ensuring requests originate from the application itself.
+## 2026-10-13 - Secure Cookies and Cache Control
+**Vulnerability:** Cookies missing the Secure flag and missing Cache-Control headers, leading to potential sensitive information exposure via browser cache.
+**Learning:** Relying solely on HTTPOnly and SameSite isn't sufficient for comprehensive cookie security. Cache-Control is necessary to prevent sensitive info from being stored.
+**Prevention:** Added Cache-Control header and Secure flag for terms cookies.
