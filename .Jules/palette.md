@@ -28,3 +28,6 @@
 ## 2024-10-12 - Add :focus-visible to anchor tags
 **Learning:** Found that while buttons and form inputs had clear `:focus-visible` styles, standard anchor links (`<a>`) lacked them. This causes keyboard users to lose track of their focus position when tabbing through navigation links or text links.
 **Action:** Always ensure that all interactive elements, including anchor links, have explicitly defined `:focus-visible` outlines matching the theme's highlight colors to maintain an accessible and clear keyboard navigation experience.
+## 2024-10-14 - Add loading feedback to form buttons
+**Learning:** Forms across the application (like Accept, Reject, Remove) perform synchronous HTTP requests when submitted, which can take a moment depending on network latency. During this time, the submit button remains active and can be clicked multiple times, leading to potential confusion or double-submissions. Since there's no immediate visual feedback, users might think the application didn't register their click.
+**Action:** Added inline JavaScript `onsubmit` handlers to these forms that immediately add the `disabled` class to the submit button and change its text to "Wait..." once the form is successfully submitted (and after any `confirm` dialogs). This provides instant visual feedback and prevents double-submissions, improving the micro-UX.
