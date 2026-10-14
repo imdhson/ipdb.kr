@@ -70,7 +70,7 @@
 										 </div>
 										 <ul class="actions">
 											<li>
-												<form method="POST" action="/sendremove" style="display:inline;" onsubmit="return confirm('Are you sure you want to remove your IP history?');">
+												<form method="POST" action="/sendremove" style="display:inline;" onsubmit="if(confirm('Are you sure you want to remove your IP history?')) { var btn = this.querySelector('button'); btn.classList.add('disabled'); btn.disabled = true; btn.innerText='Wait...'; return true; } return false;">
 													<button type="submit" class="button{{if not .History}} disabled{{end}}" role="button" aria-label="Remove IP history" style="cursor: pointer;" {{if not .History}}disabled aria-disabled="true" title="No history to remove"{{end}}>Remove</button>
 												</form>
 											</li>

@@ -48,12 +48,12 @@
 										<p lang="ko">여기에 동의하면, "IP Dashboard"에 당신의 IP가 기록되고 모두가 볼 수 있습니다. 물론 지울 수 있습니다.</p>
 										<ul class="actions">
 											<li>
-												<form method="POST" action="/terms/sendaccept" style="display:inline;">
+												<form method="POST" action="/terms/sendaccept" style="display:inline;" onsubmit="var btn = this.querySelector('button'); btn.classList.add('disabled'); btn.disabled = true; btn.innerText='Wait...';">
 													<button type="submit" class="button special" role="button" aria-label="Accept terms of use" style="cursor: pointer;">Accept</button>
 												</form>
 											</li>
 											<li>
-												<form method="POST" action="/terms/sendreject" style="display:inline;">
+												<form method="POST" action="/terms/sendreject" style="display:inline;" onsubmit="var btn = this.querySelector('button'); btn.classList.add('disabled'); btn.disabled = true; btn.innerText='Wait...';">
 													<button type="submit" class="button" role="button" aria-label="Reject terms of use" style="cursor: pointer;">Reject</button>
 												</form>
 											</li>
