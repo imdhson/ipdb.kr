@@ -39,3 +39,7 @@
 ## 2024-10-13 - [Zero-allocation IP port parsing]
 **Learning:** Using `strings.Split(ip, ":")` to split an IP and a port forces a heap allocation (e.g. 32 bytes) because it allocates a new slice. By rearranging the logic to use `strings.Cut(ip, ":")` when the input is not an IPv6 string, we can eliminate the slice allocation entirely and reduce processing time significantly (from ~70ns down to ~10ns).
 **Action:** Prefer `strings.Cut` over `strings.Split` whenever only the first delimited element is required or when processing simple two-part strings. Avoid blindly calling `strings.Split` before ensuring the split parts will actually be used.
+
+## 2023-10-27 - [Zero-allocation string conversion for read-only parsing]
+**Learning:** When parsing small files (like `iphistory.txt`) into structs where strings only need to be sequentially read (using `strings.Count`, `strings.Cut` etc.), standard `string(bytes)` casts cause unnecessary heap allocations by copying the byte slice.
+**Action:** Use `unsafe.String(unsafe.SliceData(data), len(data))` instead of `string(data)` to perform zero-allocation string casts when the underlying byte slice will not be modified during parsing.
