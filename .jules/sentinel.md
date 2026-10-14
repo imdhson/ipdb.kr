@@ -46,3 +46,8 @@
 **Vulnerability:** Cookies missing the Secure flag and missing Cache-Control headers, leading to potential sensitive information exposure via browser cache.
 **Learning:** Relying solely on HTTPOnly and SameSite isn't sufficient for comprehensive cookie security. Cache-Control is necessary to prevent sensitive info from being stored.
 **Prevention:** Added Cache-Control header and Secure flag for terms cookies.
+
+## 2024-05-20 - [Fix Information Disclosure of User IPs]
+**Vulnerability:** The application was vulnerable to information disclosure where users could see the entire IP history of the system, including other users' IP addresses on the dashboard.
+**Learning:** This occurred because `readHistory()` simply returned all entries from `iphistory.txt` to the frontend template, rather than filtering the entries to only match the request's IP.
+**Prevention:** Always ensure that data retrieval for a specific user session or request context is explicitly filtered and authorized for that user. In this case, `readHistory(userIP string)` was modified to only return entries matching `userIP`.

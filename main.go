@@ -24,8 +24,9 @@ type HistoryEntry struct {
 	IP   string
 }
 
-// readHistory reads the IP history from the file
-func readHistory() ([]HistoryEntry, error) {
+// readHistory reads the IP history from the file for a specific user
+// SECURITY: Filter history by userIP to prevent information disclosure (users seeing other users' IPs)
+func readHistory(userIP string) ([]HistoryEntry, error) {
 	fileMutex.Lock()
 	defer fileMutex.Unlock()
 
@@ -58,10 +59,12 @@ func readHistory() ([]HistoryEntry, error) {
 		}
 		line = strings.TrimSuffix(line, "\r")
 		if date, ip, found := strings.Cut(line, "|"); found {
-			history = append(history, HistoryEntry{
-				Date: date,
-				IP:   ip,
-			})
+			if ip == userIP {
+				history = append(history, HistoryEntry{
+					Date: date,
+					IP:   ip,
+				})
+			}
 		}
 	}
 
@@ -244,7 +247,7 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Failed to append history: %v", err)
 	}
 
-	history, err := readHistory()
+	history, err := readHistory(ip)
 	if err != nil {
 		log.Printf("Failed to read history: %v", err)
 	}
