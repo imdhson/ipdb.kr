@@ -51,3 +51,8 @@
 **Vulnerability:** The application was vulnerable to information disclosure where users could see the entire IP history of the system, including other users' IP addresses on the dashboard.
 **Learning:** This occurred because `readHistory()` simply returned all entries from `iphistory.txt` to the frontend template, rather than filtering the entries to only match the request's IP.
 **Prevention:** Always ensure that data retrieval for a specific user session or request context is explicitly filtered and authorized for that user. In this case, `readHistory(userIP string)` was modified to only return entries matching `userIP`.
+
+## 2026-10-15 - Prevent Information Disclosure via Directory Listing
+**Vulnerability:** The standard `http.FileServer` in Go will serve a directory listing (index) if a requested directory does not contain an `index.html` file. This could lead to information disclosure, allowing attackers to discover static files and assets that they shouldn't see.
+**Learning:** `http.FileServer` doesn't have a built-in flag to disable directory listings.
+**Prevention:** To disable directory listings, wrap the `http.FileSystem` with a custom implementation that intercepts the `Open` method, checks if the requested file `IsDir()`, and returns `os.ErrNotExist` (which results in a 404 response) instead of allowing the directory index to be served.

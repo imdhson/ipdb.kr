@@ -373,7 +373,28 @@ func handleSendRemove(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	// ⚡ Bolt: Use io.WriteString instead of w.Write([]byte(...))
 	// Reduces allocations from 1 to 0 and improves speed by ~70%
-	io.WriteString(w, "<meta http-equiv='refresh' content='0;url=/terms/sendreject' />\n<h1>Wait...</h1>")
+	io.WriteString(w, "<meta http-equiv='refresh' content='0;url=/' />\n<h1>Wait...</h1>")
+}
+
+type noDirFileSystem struct {
+	http.FileSystem
+}
+
+func (fs noDirFileSystem) Open(name string) (http.File, error) {
+	f, err := fs.FileSystem.Open(name)
+	if err != nil {
+		return nil, err
+	}
+	stat, err := f.Stat()
+	if err != nil {
+		f.Close()
+		return nil, err
+	}
+	if stat.IsDir() {
+		f.Close()
+		return nil, os.ErrNotExist
+	}
+	return f, nil
 }
 
 // applySecurityHeaders adds security headers to the response
@@ -391,8 +412,8 @@ func applySecurityHeaders(next http.Handler) http.Handler {
 
 func main() {
 	// Static files
-	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("assets"))))
-	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("images"))))
+	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(noDirFileSystem{http.Dir("assets")})))
+	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(noDirFileSystem{http.Dir("images")})))
 
 	// Routes
 	http.HandleFunc("/", handleIndex)
