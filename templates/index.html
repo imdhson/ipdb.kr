@@ -20,7 +20,9 @@
 
 				<!-- Header -->
 					<header id="header" class="alt">
-						<h1>{{.IP}}</h1>
+						<h1>
+							<span tabindex="0" role="button" aria-label="Copy IP address: {{.IP}}" title="Click to copy IP" style="cursor: pointer; border-bottom: 2px dashed rgba(255,255,255,0.25);" onclick="navigator.clipboard.writeText('{{.IP}}').then(() => { var h2 = this.parentElement.nextElementSibling; var orig = h2.innerText; if (orig === 'Copied!') return; h2.innerText = 'Copied!'; setTimeout(() => { h2.innerText = orig; }, 2000); }).catch(() => { /* ignore */ })" onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); this.click(); }">{{.IP}}</span>
+						</h1>
 						<h2>Your IP Address.</h2>
 						<p>by <a href="/">ip.cciicc.cc</a></p>
 					</header>
