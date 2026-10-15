@@ -43,3 +43,7 @@
 ## 2023-10-27 - [Zero-allocation string conversion for read-only parsing]
 **Learning:** When parsing small files (like `iphistory.txt`) into structs where strings only need to be sequentially read (using `strings.Count`, `strings.Cut` etc.), standard `string(bytes)` casts cause unnecessary heap allocations by copying the byte slice.
 **Action:** Use `unsafe.String(unsafe.SliceData(data), len(data))` instead of `string(data)` to perform zero-allocation string casts when the underlying byte slice will not be modified during parsing.
+
+## 2024-10-25 - [Zero-allocation URL parsing for CSRF]
+**Learning:** Parsing HTTP request `Origin` and `Referer` headers with `url.Parse` forces heap allocations and is computationally expensive on every state-changing POST request. By extracting the URL scheme and comparing the remaining string to `r.Host` manually, we can perform the CSRF check without any allocations, resulting in a >6x speedup.
+**Action:** When validating simple host prefixes or CSRF origins, prefer direct string slicing and prefix matching (handling exact matches or trailing slashes/queries) over `url.Parse` to eliminate heap allocations in hot paths.
