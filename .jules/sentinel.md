@@ -51,3 +51,7 @@
 **Vulnerability:** The application was vulnerable to information disclosure where users could see the entire IP history of the system, including other users' IP addresses on the dashboard.
 **Learning:** This occurred because `readHistory()` simply returned all entries from `iphistory.txt` to the frontend template, rather than filtering the entries to only match the request's IP.
 **Prevention:** Always ensure that data retrieval for a specific user session or request context is explicitly filtered and authorized for that user. In this case, `readHistory(userIP string)` was modified to only return entries matching `userIP`.
+## 2024-10-17 - Directory Listing Prevention
+**Vulnerability:** Default http.FileServer enables directory listing.
+**Learning:** Missing index files in static directories exposes file structure.
+**Prevention:** Wrap http.FileSystem in a custom struct to return os.ErrNotExist for directories.
