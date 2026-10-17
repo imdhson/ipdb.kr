@@ -2,3 +2,6 @@ app.log
 app.pid
 ipdb
 main
+server.log
+server.pid
+iphistory.txt
