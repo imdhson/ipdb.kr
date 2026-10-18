@@ -389,10 +389,35 @@ func applySecurityHeaders(next http.Handler) http.Handler {
 	})
 }
 
+// disableDirListing wraps an http.FileSystem to prevent directory listing.
+// SECURITY: Prevents information disclosure vulnerabilities where users can see all files in a directory.
+type disableDirListing struct {
+	fs http.FileSystem
+}
+
+func (d disableDirListing) Open(path string) (http.File, error) {
+	f, err := d.fs.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	s, err := f.Stat()
+	if err != nil {
+		f.Close()
+		return nil, err
+	}
+	if s.IsDir() {
+		f.Close()
+		return nil, os.ErrNotExist
+	}
+
+	return f, nil
+}
+
 func main() {
 	// Static files
-	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("assets"))))
-	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("images"))))
+	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(disableDirListing{http.Dir("assets")})))
+	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(disableDirListing{http.Dir("images")})))
 
 	// Routes
 	http.HandleFunc("/", handleIndex)
