@@ -31,3 +31,6 @@
 ## 2024-10-14 - Add loading feedback to form buttons
 **Learning:** Forms across the application (like Accept, Reject, Remove) perform synchronous HTTP requests when submitted, which can take a moment depending on network latency. During this time, the submit button remains active and can be clicked multiple times, leading to potential confusion or double-submissions. Since there's no immediate visual feedback, users might think the application didn't register their click.
 **Action:** Added inline JavaScript `onsubmit` handlers to these forms that immediately add the `disabled` class to the submit button and change its text to "Wait..." once the form is successfully submitted (and after any `confirm` dialogs). This provides instant visual feedback and prevents double-submissions, improving the micro-UX.
+## 2024-10-15 - Make Responsive Tables Keyboard Accessible
+**Learning:** Responsive table containers that use `overflow-x: auto` (like `.table-wrapper`) become horizontally scrollable on small screens, but keyboard-only users cannot scroll them if the container is not focusable.
+**Action:** Always add `tabindex="0"`, `role="region"`, and a descriptive `aria-label` to horizontally scrollable table containers to ensure they are focusable and accessible to both keyboard and screen reader users.
