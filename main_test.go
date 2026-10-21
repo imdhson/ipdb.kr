@@ -107,3 +107,75 @@ func TestGetIP(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateCSRF(t *testing.T) {
+	tests := []struct {
+		name     string
+		origin   string
+		referer  string
+		host     string
+		expected bool
+	}{
+		{
+			name:     "Valid Origin",
+			origin:   "https://example.com",
+			host:     "example.com",
+			expected: true,
+		},
+		{
+			name:     "Valid Referer",
+			referer:  "https://example.com/path",
+			host:     "example.com",
+			expected: true,
+		},
+		{
+			name:     "Invalid Origin",
+			origin:   "https://evil.com",
+			host:     "example.com",
+			expected: false,
+		},
+		{
+			name:     "Invalid Referer",
+			referer:  "https://evil.com/path",
+			host:     "example.com",
+			expected: false,
+		},
+		{
+			name:     "No Headers",
+			host:     "example.com",
+			expected: false,
+		},
+		{
+			name:     "Port in Origin matching Host",
+			origin:   "http://localhost:8080",
+			host:     "localhost:8080",
+			expected: true,
+		},
+		{
+			name:     "Port mismatch",
+			origin:   "http://localhost:8081",
+			host:     "localhost:8080",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := &http.Request{
+				Host:   tt.host,
+				Header: http.Header{},
+			}
+			if tt.origin != "" {
+				req.Header.Set("Origin", tt.origin)
+			}
+			if tt.referer != "" {
+				req.Header.Set("Referer", tt.referer)
+			}
+
+			res := validateCSRF(req)
+			if res != tt.expected {
+				t.Errorf("Mismatch for %s: expected=%v, got=%v", tt.name, tt.expected, res)
+			}
+		})
+	}
+}

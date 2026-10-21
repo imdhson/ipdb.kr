@@ -8,7 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/netip"
-	"net/url"
+
 	"os"
 	"strings"
 	"sync"
@@ -281,20 +281,38 @@ func handleTerms(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// extractHostFast extracts the host from a URL string without allocating memory
+func extractHostFast(u string) string {
+	if idx := strings.Index(u, "://"); idx != -1 {
+		u = u[idx+3:]
+	} else if strings.HasPrefix(u, "//") {
+		u = u[2:]
+	}
+	if idx := strings.IndexAny(u, "/?#"); idx != -1 {
+		u = u[:idx]
+	}
+	if idx := strings.IndexByte(u, '@'); idx != -1 {
+		u = u[idx+1:]
+	}
+	return u
+}
+
 // validateCSRF checks the Origin or Referer header to prevent CSRF attacks
 // SECURITY: Ensures state-changing POST requests come from our own site
 func validateCSRF(r *http.Request) bool {
+	// ⚡ Bolt: Fast, zero-allocation URL host extraction
+	// Reduces allocations in hot paths by avoiding url.Parse()
 	origin := r.Header.Get("Origin")
 	if origin != "" {
-		if u, err := url.Parse(origin); err == nil {
-			return u.Host == r.Host
+		if extractHostFast(origin) == r.Host {
+			return true
 		}
 	}
 
 	referer := r.Header.Get("Referer")
 	if referer != "" {
-		if u, err := url.Parse(referer); err == nil {
-			return u.Host == r.Host
+		if extractHostFast(referer) == r.Host {
+			return true
 		}
 	}
 
