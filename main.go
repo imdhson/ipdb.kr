@@ -376,6 +376,30 @@ func handleSendRemove(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "<meta http-equiv='refresh' content='0;url=/terms/sendreject' />\n<h1>Wait...</h1>")
 }
 
+type noDirFileSystem struct {
+	fs http.FileSystem
+}
+
+func (nfs noDirFileSystem) Open(path string) (http.File, error) {
+	f, err := nfs.fs.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	stat, err := f.Stat()
+	if err != nil {
+		f.Close()
+		return nil, err
+	}
+
+	if stat.IsDir() {
+		f.Close()
+		return nil, os.ErrNotExist
+	}
+
+	return f, nil
+}
+
 // applySecurityHeaders adds security headers to the response
 func applySecurityHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -391,8 +415,8 @@ func applySecurityHeaders(next http.Handler) http.Handler {
 
 func main() {
 	// Static files
-	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("assets"))))
-	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("images"))))
+	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(noDirFileSystem{http.Dir("assets")})))
+	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(noDirFileSystem{http.Dir("images")})))
 
 	// Routes
 	http.HandleFunc("/", handleIndex)
