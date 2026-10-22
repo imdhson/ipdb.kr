@@ -407,10 +407,36 @@ func applySecurityHeaders(next http.Handler) http.Handler {
 	})
 }
 
+// neuteredFileSystem prevents directory listing by returning os.ErrNotExist for directories
+// SECURITY: Prevents information disclosure vulnerabilities via directory indexing
+type neuteredFileSystem struct {
+	fs http.FileSystem
+}
+
+func (nfs neuteredFileSystem) Open(path string) (http.File, error) {
+	f, err := nfs.fs.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	s, err := f.Stat()
+	if err != nil {
+		f.Close()
+		return nil, err
+	}
+
+	if s.IsDir() {
+		f.Close()
+		return nil, os.ErrNotExist
+	}
+
+	return f, nil
+}
+
 func main() {
 	// Static files
-	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("assets"))))
-	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("images"))))
+	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(neuteredFileSystem{http.Dir("assets")})))
+	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(neuteredFileSystem{http.Dir("images")})))
 
 	// Routes
 	http.HandleFunc("/", handleIndex)
