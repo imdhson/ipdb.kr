@@ -394,6 +394,29 @@ func handleSendRemove(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "<meta http-equiv='refresh' content='0;url=/terms/sendreject' />\n<h1>Wait...</h1>")
 }
 
+// noDirListingFS wraps http.FileSystem to disable directory listings
+type noDirListingFS struct {
+	fs http.FileSystem
+}
+
+// Open intercepts the open call and returns os.ErrNotExist if the file is a directory
+func (n noDirListingFS) Open(name string) (http.File, error) {
+	f, err := n.fs.Open(name)
+	if err != nil {
+		return nil, err
+	}
+	stat, err := f.Stat()
+	if err != nil {
+		f.Close()
+		return nil, err
+	}
+	if stat.IsDir() {
+		f.Close()
+		return nil, os.ErrNotExist
+	}
+	return f, nil
+}
+
 // applySecurityHeaders adds security headers to the response
 func applySecurityHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -409,8 +432,8 @@ func applySecurityHeaders(next http.Handler) http.Handler {
 
 func main() {
 	// Static files
-	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("assets"))))
-	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("images"))))
+	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(noDirListingFS{http.Dir("assets")})))
+	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(noDirListingFS{http.Dir("images")})))
 
 	// Routes
 	http.HandleFunc("/", handleIndex)
